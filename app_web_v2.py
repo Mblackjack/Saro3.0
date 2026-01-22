@@ -1,230 +1,126 @@
 # -*- coding: utf-8 -*-
-"""
-SARO v6.0 - Sistema Automático de Registro de Ouvidorias
-Interface Web com Streamlit - Integração Total com Excel em Tempo Real
-"""
-
 import streamlit as st
-import json
-import os
-import pandas as pd
-from datetime import datetime
 from classificador_denuncias import ClassificadorDenuncias
-from io import BytesIO
 
-# Configuração da página
-st.set_page_config(page_title="SARO - Sistema de Ouvidorias", layout="wide")
+st.set_page_config(page_title="SARO - MPRJ", layout="wide", page_icon="⚖️")
 
-# Caminhos dos arquivos
-BASE_DIR = "/home/ubuntu/mprj_denuncias"
-HISTORICO_JSON = os.path.join(BASE_DIR, "historico_denuncias.json")
-HISTORICO_EXCEL = os.path.join(BASE_DIR, "SARO_Ouvidorias_Registradas.xlsx")
-
-# CSS customizado
+# Estilo CSS para replicar o visual da versão anterior
 st.markdown("""
 <style>
-    .resumo-box {
-        background-color: #f0f2f6;
-        padding: 15px;
-        border-radius: 8px;
-        border-left: 4px solid #1f77b4;
-    }
-    .tabela-container {
-        max-height: 700px;
-        overflow-y: auto;
-        overflow-x: auto;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        padding: 10px;
-    }
-    .modal-container {
-        background-color: #f9f9f9;
-        border: 2px solid #1f77b4;
-        border-radius: 8px;
+    .caixa-resultado {
+        border: 1px solid #960018;
         padding: 20px;
-        margin: 20px 0;
-    }
-    .excel-link {
-        background-color: #217346;
-        color: white !important;
-        padding: 10px 20px;
-        text-decoration: none;
-        border-radius: 5px;
-        font-weight: bold;
-        display: inline-block;
+        border-radius: 10px;
+        background-color: #ffffff;
         margin-bottom: 20px;
     }
+    .label-vermelho { color: #960018; font-weight: bold; }
+    .titulo-custom { color: #960018; font-weight: bold; font-size: 1.5rem; }
+    .badge-verde {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        display: inline-block;
+        margin-right: 10px;
+        border: 1px solid #c8e6c9;
+    }
+    .resumo-box { background-color: #f0f2f6; padding: 15px; border-radius: 8px; border-left: 5px solid #960018; }
+    .area-planilha { border: 2px solid #960018; padding: 25px; text-align: center; border-radius: 10px; background-color: #ffffff; margin-top: 20px; }
+    div.stButton > button:first-child { background-color: #960018 !important; color: white !important; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
-# Funções de Persistência
-def salvar_dados(historico):
-    # Salvar JSON (Backup)
-    with open(HISTORICO_JSON, 'w', encoding='utf-8') as f:
-        json.dump(historico, f, ensure_ascii=False, indent=2)
-    
-    # Salvar Excel (Principal)
-    if historico:
-        df = pd.DataFrame(historico)
-        # Reordenar colunas para o Excel ficar organizado
-        colunas_ordem = [
-            "data", "num_comunicacao", "num_mprj", "responsavel", "consumidor_vencedor",
-            "municipio", "promotoria", "tema", "subtema", "empresa", "resumo", "endereco", "denuncia"
-        ]
-        # Garantir que todas as colunas existam
-        for col in colunas_ordem:
-            if col not in df.columns:
-                df[col] = ""
-        
-        df = df[colunas_ordem]
-        df.columns = [
-            "Data", "Nº Comunicação", "Nº MPRJ", "Responsável", "Consumidor Vencedor",
-            "Município", "Promotoria", "Tema", "Subtema", "Empresa", "Resumo", "Endereço", "Descrição Completa"
-        ]
-        df.to_excel(HISTORICO_EXCEL, index=False)
-
-def carregar_dados():
-    if os.path.exists(HISTORICO_JSON):
-        with open(HISTORICO_JSON, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    return []
-
-# Inicializar estado da sessão
 if "resultado" not in st.session_state:
     st.session_state.resultado = None
-if "historico" not in st.session_state:
-    st.session_state.historico = carregar_dados()
-if "visualizando_registro" not in st.session_state:
-    st.session_state.visualizando_registro = None
 
-# Cabeçalho
-st.title("⚖️ SARO - Sistema Automático de Registro de Ouvidorias")
-st.markdown("**Versão 6.0** | Integração em Tempo Real com Excel")
+try:
+    classificador = ClassificadorDenuncias()
+except Exception as e:
+    st.error(f"Erro ao iniciar sistema: {e}")
+    st.stop()
 
-# Link para o Excel na Barra Lateral
-with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Microsoft_Office_Excel_%282019%E2%80%93present%29.svg/1200px-Microsoft_Office_Excel_%282019%E2%80%93present%29.svg.png", width=50)
-    st.markdown("### 📁 Banco de Dados Excel")
-    
-    if os.path.exists(HISTORICO_EXCEL):
-        with open(HISTORICO_EXCEL, "rb") as file:
-            st.download_button(
-                label="📥 Baixar Planilha de Ouvidorias",
-                data=file,
-                file_name="SARO_Ouvidorias_Registradas.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
-            )
-    else:
-        st.info("A planilha será gerada após o primeiro registro.")
-    
-    st.divider()
-    st.caption("O arquivo Excel é atualizado automaticamente a cada novo registro.")
-
+st.sidebar.image("https://www.mprj.mp.br/mprj-theme/images/mprj/logo_mprj.png", width=180)
+st.title("⚖️ Sistema Automático de Registro de Ouvidorias (SARO)")
+st.markdown("*Versão 2.0* | Registro e Gestão de Ouvidorias com auxílio de Inteligência Artificial")
 st.divider()
 
-# Inicializar classificador
-classificador = ClassificadorDenuncias()
-
-# ============ VISUALIZAÇÃO DE REGISTRO ============
-if st.session_state.visualizando_registro is not None:
-    registro = st.session_state.visualizando_registro
-    st.markdown("### 📋 Detalhes da Ouvidoria")
-    with st.container():
-        st.markdown('<div class="modal-container">', unsafe_allow_html=True)
-        col1, col2, col3 = st.columns(3)
-        with col1: st.markdown(f"**Nº Comunicação:** {registro.get('num_comunicacao', 'N/A')}")
-        with col2: st.markdown(f"**Nº MPRJ:** {registro.get('num_mprj', 'N/A')}")
-        with col3: st.markdown(f"**Data:** {registro.get('data', 'N/A')}")
-        col1, col2 = st.columns(2)
-        with col1: st.markdown(f"**Responsável:** {registro.get('responsavel', 'N/A')}")
-        with col2: st.markdown(f"**Consumidor Vencedor:** {registro.get('consumidor_vencedor', 'N/A')}")
-        st.markdown(f"**Endereço:** {registro.get('endereco', 'N/A')}")
-        st.markdown(f"**Município:** {registro.get('municipio', 'N/A')} | **Promotoria:** {registro.get('promotoria', 'N/A')}")
-        st.markdown(f"**Tema:** {registro.get('tema', 'N/A')} | **Subtema:** {registro.get('subtema', 'N/A')} | **Empresa:** {registro.get('empresa', 'N/A')}")
-        st.markdown("**Resumo:**")
-        st.info(registro.get('resumo', 'N/A'))
-        with st.expander("Ver Descrição Completa"):
-            st.write(registro.get('denuncia', 'N/A'))
-        if st.button("❌ Fechar Visualização"):
-            st.session_state.visualizando_registro = None
-            st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
-    st.divider()
-
-# ============ FORMULÁRIO DE OUVIDORIA ============
-with st.form("form_ouvidoria", clear_on_submit=True):
-    st.markdown("### 📝 Novo Registro")
+# --- FORMULÁRIO DE REGISTRO ---
+with st.form("form_reg", clear_on_submit=True):
+    st.markdown('<p class="titulo-custom">📝 Novo Registro de Ouvidoria</p>', unsafe_allow_html=True)
+    
     col1, col2 = st.columns(2)
-    with col1: num_comunicacao = st.text_input("Nº de Comunicação")
-    with col2: num_mprj = st.text_input("Nº MPRJ")
-    endereco = st.text_input("Endereço da Denúncia")
-    denuncia = st.text_area("Descrição da Ouvidoria")
-    col1, col2 = st.columns(2)
-    with col1:
-        responsavel = st.radio("Enviado por:", options=["Elias", "Matheus", "Ana Beatriz", "Sônia", "Priscila"], horizontal=True)
-    with col2:
-        consumidor_vencedor = st.radio("É consumidor vencedor?", options=["Sim", "Não"], horizontal=True)
-    submit = st.form_submit_button("🔍 Processar e Salvar no Excel", use_container_width=True, type="primary")
-
-if submit:
-    if not endereco or not denuncia:
-        st.error("❌ Preencha o Endereço e a Descrição!")
-    else:
-        with st.spinner("Processando e salvando..."):
-            resultado = classificador.processar_denuncia(endereco, denuncia, num_comunicacao, num_mprj)
-            resultado.update({
-                "responsavel": responsavel,
-                "consumidor_vencedor": consumidor_vencedor,
-                "data": datetime.now().strftime("%d/%m/%Y %H:%M")
-            })
-            st.session_state.resultado = resultado
-            st.session_state.historico.append(resultado)
-            salvar_dados(st.session_state.historico)
-            st.success("✅ Registrado com sucesso no Excel!")
-            st.rerun()
-
-# ============ REGISTRO DE OUVIDORIAS (HISTÓRICO) ============
-st.divider()
-st.markdown("### 📊 Histórico de Registros")
-
-if not st.session_state.historico:
-    st.info("Nenhum registro encontrado.")
-else:
-    col1, col2 = st.columns([3, 1])
-    with col1: search = st.text_input("🔍 Buscar", placeholder="Pesquise...")
-    with col2: filtro_tema = st.selectbox("Tema", ["Todos"] + sorted(list(set(h['tema'] for h in st.session_state.historico))))
-
-    dados_filtrados = st.session_state.historico
-    if search:
-        search = search.lower()
-        dados_filtrados = [h for h in dados_filtrados if any(search in str(v).lower() for v in h.values())]
-    if filtro_tema != "Todos":
-        dados_filtrados = [h for h in dados_filtrados if h['tema'] == filtro_tema]
-
-    st.markdown('<div class="tabela-container">', unsafe_allow_html=True)
-    cols = st.columns([1.5, 1.5, 1.5, 2, 1.5, 1.5, 1, 1])
-    headers = ["Nº Com.", "Nº MPRJ", "Data", "Promotoria", "Município", "Responsável", "Ver", "Del"]
-    for col, header in zip(cols, headers): col.write(f"**{header}**")
-    st.divider()
+    num_com = col1.text_input("Nº de Comunicação")
+    num_mprj = col2.text_input("Nº MPRJ")
     
-    for registro in reversed(dados_filtrados):
-        idx_original = st.session_state.historico.index(registro)
-        cols = st.columns([1.5, 1.5, 1.5, 2, 1.5, 1.5, 1, 1])
-        cols[0].write(registro.get('num_comunicacao', 'N/A'))
-        cols[1].write(registro.get('num_mprj', 'N/A'))
-        cols[2].write(registro.get('data', 'N/A'))
-        cols[3].write(registro.get('promotoria', 'N/A'))
-        cols[4].write(registro.get('municipio', 'N/A'))
-        cols[5].write(registro.get('responsavel', 'N/A'))
-        if cols[6].button("👁️", key=f"v_{idx_original}"):
-            st.session_state.visualizando_registro = registro
-            st.rerun()
-        if cols[7].button("🗑️", key=f"d_{idx_original}"):
-            st.session_state.historico.pop(idx_original)
-            salvar_dados(st.session_state.historico)
-            st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    endereco = st.text_input("Endereço Completo")
+    denuncia = st.text_area("Descrição da Ouvidoria", height=150)
+    
+    f1, f2 = st.columns(2)
+    responsavel = f1.radio("Responsável:", ["Elias", "Matheus", "Ana Beatriz", "Sônia", "Priscila"], horizontal=True)
+    vencedor = f2.radio("Consumidor vencedor?", ["Sim", "Não"], horizontal=True)
+    
+    if st.form_submit_button("🔍Registrar Ouvidoria", use_container_width=True):
+        if endereco and denuncia:
+            with st.spinner("Processando..."):
+                res = classificador.processar_denuncia(endereco, denuncia, num_com, num_mprj, vencedor, responsavel)
+                st.session_state.resultado = res
+                st.success("✅ Enviado para o Arquivo de Ouvidorias!")
+        else:
+            st.error("Preencha Endereço e Descrição.")
+
+# --- TÓPICO: REGISTRO DA CLASSIFICAÇÃO ATUAL (VERSÃO ANTERIOR) ---
+if st.session_state.resultado:
+    res = st.session_state.resultado
+    st.divider()
+    st.markdown("### ✅ Resultado da Classificação Atual")
+    
+    # Box com informações principais
+    st.markdown(f"""
+    <div class="caixa-resultado">
+        <div style="display: flex; justify-content: space-between;">
+            <p><span class="label-vermelho">Nº Comunicação:</span> {res['num_com']}</p>
+            <p><span class="label-vermelho">Nº MPRJ:</span> {res['num_mprj']}</p>
+        </div>
+        <p>📍 <span class="label-vermelho">Município:</span> {res['municipio']}</p>
+        <p>🏛️ <span class="label-vermelho">Promotoria Responsável:</span> {res['promotoria']}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Badges de Tema, Subtema e Empresa
+    col_t1, col_t2, col_t3 = st.columns(3)
+    col_t1.markdown(f'<div class="badge-verde">Tema: {res["tema"]}</div>', unsafe_allow_html=True)
+    col_t2.markdown(f'<div class="badge-verde">Subtema: {res["subtema"]}</div>', unsafe_allow_html=True)
+    col_t3.markdown(f'<div class="badge-verde">Empresa: {res["empresa"]}</div>', unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("**Resumo da IA (Máximo 10 palavras):**")
+    st.markdown(f'<div class="resumo-box">{res["resumo"]}</div>', unsafe_allow_html=True)
+    
+    # Expander com a descrição original
+    with st.expander("📄 Ver Descrição da Ouvidoria"):
+        st.write(res['denuncia'])
+    
+    if st.button("Limpar Tela para Novo Registro"):
+        st.session_state.resultado = None
+        st.rerun()
 
 st.divider()
-st.caption("SARO v6.0 | Banco de Dados Excel Sincronizado")
+
+# --- TÓPICO: REGISTRO DE OUVIDORIAS (LINK) ---
+st.markdown('<p class="titulo-custom">📊 Registro de Ouvidorias</p>', unsafe_allow_html=True)
+url_planilha = "https://docs.google.com/spreadsheets/d/1RqvTGIawKh9Kdj8e-9BFPpi33xkNeA33ItKAaUC40xc/edit"
+
+st.markdown(f"""
+<div class="area-planilha">
+    <p>Acesse a planilha oficial atualizada em tempo real:</p>
+    <a href="{url_planilha}" target="_blank" style="font-weight: bold; color: #960018; font-size: 1.2rem;">
+        📂 Abrir Planilha de Ouvidorias
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+st.divider()
+
+st.caption("SARO v2.0 - Sistema Automático de Registro de Ouvidorias | Ministério Público do Rio de Janeiro (Created by Matheus Pereira Barreto [62006659])")
