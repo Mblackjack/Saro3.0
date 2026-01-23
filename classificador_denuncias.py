@@ -14,8 +14,8 @@ class ClassificadorDenuncias:
         genai.configure(api_key=api_key)
         self.model = genai.GenerativeModel('gemini-flash-latest')
         
-        # URL da Planilha Viva (Webhook)
-        self.webhook_url = st.secrets.get("GSHEET_WEBHOOK")
+        # Webhook do Power Automate (SharePoint)
+        self.webhook_url = st.secrets.get("SHAREPOINT_WEBHOOK")
         
         # Bases locais
         self.base_path = os.path.dirname(os.path.abspath(__file__))
@@ -32,6 +32,7 @@ class ClassificadorDenuncias:
         }
 
     def remover_acentos(self, texto: str) -> str:
+        if not texto: return ""
         return "".join(c for c in unicodedata.normalize('NFD', texto) if unicodedata.category(c) != 'Mn')
 
     def processar_denuncia(self, endereco, denuncia, num_com, num_mprj, vencedor, responsavel):
@@ -57,7 +58,7 @@ class ClassificadorDenuncias:
         except:
             dados_ia = {"tema": "Outros", "subtema": "Geral", "empresa": "Não identificada", "resumo": "Processamento manual"}
 
-        # 3. Montar dados para o Google Script
+        # 3. Montar dados finais
         dados_final = {
             "num_com": num_com,
             "num_mprj": num_mprj,
@@ -73,11 +74,13 @@ class ClassificadorDenuncias:
             "responsavel": responsavel
         }
 
-        # 4. ENVIO PARA A PLANILHA VIVA
+        # 4. ENVIO PARA O SHAREPOINT (VIA WEBHOOK)
+        sucesso = False
         if self.webhook_url:
             try:
-                requests.post(self.webhook_url, json=dados_final, timeout=10)
+                resp = requests.post(self.webhook_url, json=dados_final, timeout=15)
+                sucesso = resp.status_code in [200, 202]
             except Exception as e:
-                st.error(f"Erro ao enviar para a planilha: {e}")
+                st.error(f"Erro ao conectar com Power Automate: {e}")
         
-        return dados_final
+        return dados_final, sucesso
