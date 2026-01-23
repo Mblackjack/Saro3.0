@@ -35,6 +35,7 @@ st.markdown("""
 if "resultado" not in st.session_state:
     st.session_state.resultado = None
 
+# Inicialização do Classificador
 try:
     classificador = ClassificadorDenuncias()
 except Exception as e:
@@ -63,14 +64,19 @@ with st.form("form_reg", clear_on_submit=True):
     
     if st.form_submit_button("🔍Registrar Ouvidoria", use_container_width=True):
         if endereco and denuncia:
-            with st.spinner("Processando..."):
-                res = classificador.processar_denuncia(endereco, denuncia, num_com, num_mprj, vencedor, responsavel)
+            with st.spinner("Processando e Integrando ao SharePoint..."):
+                # Agora o classificador retorna o resultado e o status do envio
+                res, sucesso = classificador.processar_denuncia(endereco, denuncia, num_com, num_mprj, vencedor, responsavel)
                 st.session_state.resultado = res
-                st.success("✅ Enviado para o Arquivo de Ouvidorias!")
+                
+                if sucesso:
+                    st.success("✅ Enviado com sucesso para a Tabela_SARO no SharePoint!")
+                else:
+                    st.warning("⚠️ Classificado, mas o SharePoint não confirmou o recebimento. Verifique o Power Automate.")
         else:
             st.error("Preencha Endereço e Descrição.")
 
-# --- TÓPICO: REGISTRO DA CLASSIFICAÇÃO ATUAL (VERSÃO ANTERIOR) ---
+# --- TÓPICO: REGISTRO DA CLASSIFICAÇÃO ATUAL ---
 if st.session_state.resultado:
     res = st.session_state.resultado
     st.divider()
@@ -108,15 +114,17 @@ if st.session_state.resultado:
 
 st.divider()
 
-# --- TÓPICO: REGISTRO DE OUVIDORIAS (LINK) ---
-st.markdown('<p class="titulo-custom">📊 Registro de Ouvidorias</p>', unsafe_allow_html=True)
-url_planilha = "https://docs.google.com/spreadsheets/d/1RqvTGIawKh9Kdj8e-9BFPpi33xkNeA33ItKAaUC40xc/edit"
+# --- TÓPICO: REGISTRO DE OUVIDORIAS (LINK SHAREPOINT) ---
+st.markdown('<p class="titulo-custom">📊 Registro de Ouvidorias (SharePoint)</p>', unsafe_allow_html=True)
+
+# Atualizado para o seu link do SharePoint do MPRJ
+url_planilha = "https://mprj.sharepoint.com/:x:/r/sites/cao.consumidor.equipe/_layouts/15/Doc.aspx?sourcedoc=%7B325C89C9-7198-45D7-9324-B1C54BD8E744%7D&file=Tabela_SARO.xlsx"
 
 st.markdown(f"""
 <div class="area-planilha">
-    <p>Acesse a planilha oficial atualizada em tempo real:</p>
+    <p>Acesse a planilha Tabela_SARO oficial atualizada em tempo real:</p>
     <a href="{url_planilha}" target="_blank" style="font-weight: bold; color: #960018; font-size: 1.2rem;">
-        📂 Abrir Planilha de Ouvidorias
+        📂 Abrir Planilha de Ouvidorias (SharePoint)
     </a>
 </div>
 """, unsafe_allow_html=True)
