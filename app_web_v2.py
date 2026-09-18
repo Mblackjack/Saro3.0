@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+import os
 import streamlit as st
+from PIL import Image
 from classificador_denuncias import ClassificadorDenuncias
 
 st.set_page_config(page_title="SARO - MPRJ", layout="wide", page_icon="⚖️")
@@ -43,8 +45,24 @@ except Exception as e:
     st.stop()
 
 st.sidebar.image("https://www.mprj.mp.br/mprj-theme/images/mprj/logo_mprj.png", width=180)
-st.title("⚖️ Sistema Automático de Registro de Ouvidorias (SARO) | CAO Consumidor")
-st.markdown("*Versão 3.0* | Registro e Gestão de Ouvidorias com auxílio de Inteligência Artificial")
+
+# --- LOCALIZAÇÃO E CARREGAMENTO DA IMAGEM DO CABEÇALHO ---
+base_path = os.path.dirname(os.path.abspath(__file__))
+caminho_imagem = os.path.join(base_path, "IMAGEM CAO CONSUMIDOR.png")
+
+col_img, col_titulo = st.columns([1, 5])
+
+with col_img:
+    if os.path.exists(caminho_imagem):
+        img = Image.open(caminho_imagem)
+        st.image(img, use_container_width=True)
+    else:
+        st.warning("Imagem não encontrada no diretório do projeto.")
+
+with col_titulo:
+    st.title("Sistema Automático de Registro de Ouvidorias (SARO) | CAO Consumidor")
+    st.markdown("*Versão 3.0* | Registro e Gestão de Ouvidorias com auxílio de Inteligência Artificial")
+
 st.divider()
 
 # --- FORMULÁRIO DE REGISTRO ---
@@ -65,7 +83,6 @@ with st.form("form_reg", clear_on_submit=True):
     if st.form_submit_button("🔍Registrar Ouvidoria", use_container_width=True):
         if endereco and denuncia:
             with st.spinner("Processando e Integrando ao SharePoint..."):
-                # Agora o classificador retorna o resultado e o status do envio
                 res, sucesso = classificador.processar_denuncia(endereco, denuncia, num_com, num_mprj, vencedor, responsavel)
                 st.session_state.resultado = res
                 
@@ -82,7 +99,6 @@ if st.session_state.resultado:
     st.divider()
     st.markdown("### ✅ Resultado da Classificação Atual")
     
-    # Box com informações principais
     st.markdown(f"""
     <div class="caixa-resultado">
         <div style="display: flex; justify-content: space-between;">
@@ -94,7 +110,6 @@ if st.session_state.resultado:
     </div>
     """, unsafe_allow_html=True)
     
-    # Badges de Tema, Subtema e Empresa
     col_t1, col_t2, col_t3 = st.columns(3)
     col_t1.markdown(f'<div class="badge-verde">Tema: {res["tema"]}</div>', unsafe_allow_html=True)
     col_t2.markdown(f'<div class="badge-verde">Subtema: {res["subtema"]}</div>', unsafe_allow_html=True)
@@ -104,7 +119,6 @@ if st.session_state.resultado:
     st.markdown("**Resumo da IA (Máximo 10 palavras):**")
     st.markdown(f'<div class="resumo-box">{res["resumo"]}</div>', unsafe_allow_html=True)
     
-    # Expander com a descrição original
     with st.expander("📄 Ver Descrição da Ouvidoria"):
         st.write(res['denuncia'])
     
@@ -117,7 +131,6 @@ st.divider()
 # --- TÓPICO: REGISTRO DE OUVIDORIAS (LINK SHAREPOINT) ---
 st.markdown('<p class="titulo-custom">📊 Registro de Ouvidorias (SharePoint)</p>', unsafe_allow_html=True)
 
-# Atualizado para o seu link do SharePoint do MPRJ
 url_planilha = "https://mprj.sharepoint.com/:x:/r/sites/cao.consumidor.equipe/_layouts/15/Doc.aspx?sourcedoc=%7B325C89C9-7198-45D7-9324-B1C54BD8E744%7D&file=Tabela_SARO.xlsx"
 
 st.markdown(f"""
@@ -131,4 +144,4 @@ st.markdown(f"""
 
 st.divider()
 
-st.caption("SARO v2.0 - Sistema Automático de Registro de Ouvidorias | Ministério Público do Rio de Janeiro (Created by Matheus Pereira Barreto [62006659])")
+st.caption("SARO v2.0 - Sistema Automático de Registro de Ouvidorias | Ministério Público do Rio de Janeiro")
