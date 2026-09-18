@@ -4,9 +4,10 @@ import streamlit as st
 from PIL import Image
 from classificador_denuncias import ClassificadorDenuncias
 
+# Configuração da página do Streamlit
 st.set_page_config(page_title="SARO - MPRJ", layout="wide", page_icon="⚖️")
 
-# --- ESTILO CSS (CORES ATUALIZADAS PARA #FD8412) ---
+# --- ESTILO CSS CUSTOMIZADO ---
 st.markdown("""
 <style>
     .caixa-resultado {
@@ -28,25 +29,35 @@ st.markdown("""
         margin-right: 10px;
         border: 1px solid #c8e6c9;
     }
-    .resumo-box { background-color: #f0f2f6; padding: 15px; border-radius: 8px; border-left: 5px solid #FD8412; }
-    .area-planilha { border: 2px solid #FD8412; padding: 25px; text-align: center; border-radius: 10px; background-color: #ffffff; margin-top: 20px; }
-    div.stButton > button:first-child { background-color: #FD8412 !important; color: white !important; font-weight: bold; }
+    .resumo-box { 
+        background-color: #f0f2f6; 
+        padding: 15px; 
+        border-radius: 8px; 
+        border-left: 5px solid #FD8412; 
+    }
+    div.stButton > button:first-child { 
+        background-color: #FD8412 !important; 
+        color: white !important; 
+        font-weight: bold; 
+    }
 </style>
 """, unsafe_allow_html=True)
 
+# Estado da sessão para armazenar o resultado temporariamente
 if "resultado" not in st.session_state:
     st.session_state.resultado = None
 
-# Inicialização do Classificador
+# Inicialização da classe de classificação
 try:
     classificador = ClassificadorDenuncias()
 except Exception as e:
     st.error(f"Erro ao iniciar sistema: {e}")
     st.stop()
 
+# Logo na barra lateral
 st.sidebar.image("https://www.mprj.mp.br/mprj-theme/images/mprj/logo_mprj.png", width=180)
 
-# --- LOCALIZAÇÃO E CARREGAMENTO DA IMAGEM DO CABEÇALHO ---
+# --- CABEÇALHO DA APLICAÇÃO ---
 base_path = os.path.dirname(os.path.abspath(__file__))
 caminho_imagem = os.path.join(base_path, "IMAGEM CAO CONSUMIDOR.png")
 
@@ -57,7 +68,7 @@ with col_img:
         img = Image.open(caminho_imagem)
         st.image(img, use_container_width=True)
     else:
-        st.warning("Imagem não encontrada no diretório do projeto.")
+        st.warning("Imagem não encontrada no diretório.")
 
 with col_titulo:
     st.title("Sistema Automático de Registro de Ouvidorias (SARO) | CAO Consumidor")
@@ -80,25 +91,25 @@ with st.form("form_reg", clear_on_submit=True):
     responsavel = f1.radio("Responsável:", ["Elias", "Matheus", "Ana Beatriz", "Sônia", "Priscila"], horizontal=True)
     vencedor = f2.radio("Consumidor vencedor?", ["Sim", "Não"], horizontal=True)
     
-    if st.form_submit_button("🔍Registrar Ouvidoria", use_container_width=True):
+    if st.form_submit_button("🔍 Registrar Ouvidoria", use_container_width=True):
         if endereco and denuncia:
-            with st.spinner("Processando e Integrando ao SharePoint..."):
-                res, sucesso = classificador.processar_denuncia(endereco, denuncia, num_com, num_mprj, vencedor, responsavel)
+            with st.spinner("Processando classificação via IA..."):
+                # Chamada direta sem verificação de envio externo
+                res = classificador.processar_denuncia(
+                    endereco, denuncia, num_com, num_mprj, vencedor, responsavel
+                )
                 st.session_state.resultado = res
-                
-                if sucesso:
-                    st.success("✅ Enviado com sucesso para a Tabela_SARO no SharePoint!")
-                else:
-                    st.warning("⚠️ Classificado, mas o SharePoint não confirmou o recebimento. Verifique o Power Automate.")
+                st.success("✅ Ouvidoria processada com sucesso!")
         else:
             st.error("Preencha Endereço e Descrição.")
 
-# --- TÓPICO: REGISTRO DA CLASSIFICAÇÃO ATUAL ---
+# --- EXIBIÇÃO DO RESULTADO DA CLASSIFICAÇÃO ---
 if st.session_state.resultado:
     res = st.session_state.resultado
     st.divider()
     st.markdown("### ✅ Resultado da Classificação Atual")
     
+    # Caixa principal com números de registro, município e promotoria
     st.markdown(f"""
     <div class="caixa-resultado">
         <div style="display: flex; justify-content: space-between;">
@@ -110,6 +121,7 @@ if st.session_state.resultado:
     </div>
     """, unsafe_allow_html=True)
     
+    # Badges de Tema, Subtema e Empresa
     col_t1, col_t2, col_t3 = st.columns(3)
     col_t1.markdown(f'<div class="badge-verde">Tema: {res["tema"]}</div>', unsafe_allow_html=True)
     col_t2.markdown(f'<div class="badge-verde">Subtema: {res["subtema"]}</div>', unsafe_allow_html=True)
@@ -122,26 +134,10 @@ if st.session_state.resultado:
     with st.expander("📄 Ver Descrição da Ouvidoria"):
         st.write(res['denuncia'])
     
+    # Botão para limpar o estado e apagar o resultado da tela
     if st.button("Limpar Tela para Novo Registro"):
         st.session_state.resultado = None
         st.rerun()
 
 st.divider()
-
-# --- TÓPICO: REGISTRO DE OUVIDORIAS (LINK SHAREPOINT) ---
-st.markdown('<p class="titulo-custom">📊 Registro de Ouvidorias (SharePoint)</p>', unsafe_allow_html=True)
-
-url_planilha = "https://mprj.sharepoint.com/:x:/r/sites/cao.consumidor.equipe/_layouts/15/Doc.aspx?sourcedoc=%7B325C89C9-7198-45D7-9324-B1C54BD8E744%7D&file=Tabela_SARO.xlsx"
-
-st.markdown(f"""
-<div class="area-planilha">
-    <p>Acesse a planilha Tabela_SARO oficial atualizada em tempo real:</p>
-    <a href="{url_planilha}" target="_blank" style="font-weight: bold; color: #FD8412; font-size: 1.2rem;">
-        📂 Abrir Planilha de Ouvidorias (SharePoint)
-    </a>
-</div>
-""", unsafe_allow_html=True)
-
-st.divider()
-
-st.caption("SARO v2.0 - Sistema Automático de Registro de Ouvidorias | Ministério Público do Rio de Janeiro")
+st.caption("SARO v3.0 - Sistema Automático de Registro de Ouvidorias | Ministério Público do Estado do Rio de Janeiro")
