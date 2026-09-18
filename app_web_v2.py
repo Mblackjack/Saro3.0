@@ -43,8 +43,8 @@ except Exception as e:
     st.stop()
 
 st.sidebar.image("https://www.mprj.mp.br/mprj-theme/images/mprj/logo_mprj.png", width=180)
-st.title("⚖️ Sistema Automático de Registro de Ouvidorias (SARO)")
-st.markdown("*Versão 2.0* | Registro e Gestão de Ouvidorias com auxílio de Inteligência Artificial")
+st.title("⚖️ Sistema Automático de Registro de Ouvidorias (SARO) | CAO Consumidor")
+st.markdown("*Versão 3.0* | Registro e Gestão de Ouvidorias com auxílio de Inteligência Artificial")
 st.divider()
 
 # --- FORMULÁRIO DE REGISTRO ---
