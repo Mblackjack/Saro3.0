@@ -60,7 +60,7 @@ with col_img:
         st.warning("Imagem não encontrada no diretório do projeto.")
 
 with col_titulo:
-    st.title("Sistema Automático de Registro de Ouvidorias (SARO) | CAO Consumidor")
+    st.title("Sistema Automático de Registro de Ouvidorias (SARO)")
     st.markdown("*Versão 3.0* | Registro e Gestão de Ouvidorias com auxílio de Inteligência Artificial")
 
 st.divider()
