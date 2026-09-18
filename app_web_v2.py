@@ -6,18 +6,18 @@ from classificador_denuncias import ClassificadorDenuncias
 
 st.set_page_config(page_title="SARO - MPRJ", layout="wide", page_icon="⚖️")
 
-# Estilo CSS para replicar o visual da versão anterior
+# --- ESTILO CSS (CORES ATUALIZADAS PARA #FD8412) ---
 st.markdown("""
 <style>
     .caixa-resultado {
-        border: 1px solid #960018;
+        border: 1px solid #FD8412;
         padding: 20px;
         border-radius: 10px;
         background-color: #ffffff;
         margin-bottom: 20px;
     }
-    .label-vermelho { color: #960018; font-weight: bold; }
-    .titulo-custom { color: #960018; font-weight: bold; font-size: 1.5rem; }
+    .label-vermelho { color: #FD8412; font-weight: bold; }
+    .titulo-custom { color: #FD8412; font-weight: bold; font-size: 1.5rem; }
     .badge-verde {
         background-color: #e8f5e9;
         color: #2e7d32;
@@ -28,9 +28,9 @@ st.markdown("""
         margin-right: 10px;
         border: 1px solid #c8e6c9;
     }
-    .resumo-box { background-color: #f0f2f6; padding: 15px; border-radius: 8px; border-left: 5px solid #960018; }
-    .area-planilha { border: 2px solid #960018; padding: 25px; text-align: center; border-radius: 10px; background-color: #ffffff; margin-top: 20px; }
-    div.stButton > button:first-child { background-color: #960018 !important; color: white !important; font-weight: bold; }
+    .resumo-box { background-color: #f0f2f6; padding: 15px; border-radius: 8px; border-left: 5px solid #FD8412; }
+    .area-planilha { border: 2px solid #FD8412; padding: 25px; text-align: center; border-radius: 10px; background-color: #ffffff; margin-top: 20px; }
+    div.stButton > button:first-child { background-color: #FD8412 !important; color: white !important; font-weight: bold; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -60,7 +60,7 @@ with col_img:
         st.warning("Imagem não encontrada no diretório do projeto.")
 
 with col_titulo:
-    st.title("Sistema Automático de Registro de Ouvidorias")
+    st.title("Sistema Automático de Registro de Ouvidorias (SARO) | CAO Consumidor")
     st.markdown("*Versão 3.0* | Registro e Gestão de Ouvidorias com auxílio de Inteligência Artificial")
 
 st.divider()
@@ -136,7 +136,7 @@ url_planilha = "https://mprj.sharepoint.com/:x:/r/sites/cao.consumidor.equipe/_l
 st.markdown(f"""
 <div class="area-planilha">
     <p>Acesse a planilha Tabela_SARO oficial atualizada em tempo real:</p>
-    <a href="{url_planilha}" target="_blank" style="font-weight: bold; color: #960018; font-size: 1.2rem;">
+    <a href="{url_planilha}" target="_blank" style="font-weight: bold; color: #FD8412; font-size: 1.2rem;">
         📂 Abrir Planilha de Ouvidorias (SharePoint)
     </a>
 </div>
