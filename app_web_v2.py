@@ -88,7 +88,7 @@ with st.form("form_reg", clear_on_submit=True):
     denuncia = st.text_area("Descrição da Ouvidoria", height=150)
     
     f1, f2 = st.columns(2)
-    responsavel = f1.radio("Responsável:", ["Elias", "Matheus", "Ana Beatriz", "Sônia", "Priscila"], horizontal=True)
+    responsavel = f1.radio("Responsável:", ["Elias", "Marya Victoria", "Anna Paula" , "Eduarda" , "Ana Beatriz", "Sônia", "Priscila"], horizontal=True)
     vencedor = f2.radio("Consumidor vencedor?", ["Sim", "Não"], horizontal=True)
     
     if st.form_submit_button("🔍 Registrar Ouvidoria", use_container_width=True):
